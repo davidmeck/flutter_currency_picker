@@ -12,6 +12,7 @@ List<Map<String, dynamic>> currencies = [
     "decimal_separator": ".",
     "space_between_amount_and_symbol": false,
     "symbol_on_left": true,
+    "country": "United States Of America"
   },
   {
     "code": "EUR",

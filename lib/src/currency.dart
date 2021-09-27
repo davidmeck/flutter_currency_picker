@@ -34,19 +34,21 @@ class Currency {
   ///True if symbol has space with amount
   final bool spaceBetweenAmountAndSymbol;
 
-  Currency({
-    required this.code,
-    required this.name,
-    required this.symbol,
-    required this.flag,
-    required this.number,
-    required this.decimalDigits,
-    required this.namePlural,
-    required this.symbolOnLeft,
-    required this.decimalSeparator,
-    required this.thousandsSeparator,
-    required this.spaceBetweenAmountAndSymbol,
-  });
+  bool active;
+
+  Currency(
+      {required this.code,
+      required this.name,
+      required this.symbol,
+      required this.flag,
+      required this.number,
+      required this.decimalDigits,
+      required this.namePlural,
+      required this.symbolOnLeft,
+      required this.decimalSeparator,
+      required this.thousandsSeparator,
+      required this.spaceBetweenAmountAndSymbol,
+      this.active = false});
 
   Currency.from({required Map<String, dynamic> json})
       : code = json['code'],
@@ -59,7 +61,8 @@ class Currency {
         symbolOnLeft = json['symbol_on_left'],
         decimalSeparator = json['decimal_separator'],
         thousandsSeparator = json['thousands_separator'],
-        spaceBetweenAmountAndSymbol = json['space_between_amount_and_symbol'];
+        spaceBetweenAmountAndSymbol = json['space_between_amount_and_symbol'],
+        active = false;
 
   Map<String, dynamic> toJson() => {
         'code': code,

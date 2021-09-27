@@ -11,6 +11,8 @@ class CurrencyListView extends StatefulWidget {
   /// The currency picker passes the new value to the callback.
   final ValueChanged<Currency> onSelect;
 
+  final String? title;
+
   /// The Currencies that will appear at the top of the list (optional).
   ///
   /// It takes a list of Currency code.
@@ -63,6 +65,7 @@ class CurrencyListView extends StatefulWidget {
     this.physics,
     this.controller,
     this.theme,
+    this.title,
   }) : super(key: key);
 
   @override
@@ -74,7 +77,7 @@ class _CurrencyListViewState extends State<CurrencyListView> {
 
   late List<Currency> _filteredList;
   late List<Currency> _currencyList;
-  List<Currency>? _favoriteList;
+  final List<Currency> _favoriteList = [];
 
   TextEditingController? _searchController;
 
@@ -89,14 +92,24 @@ class _CurrencyListViewState extends State<CurrencyListView> {
     if (widget.currencyFilter != null) {
       final List<String> currencyFilter =
           widget.currencyFilter!.map((code) => code.toUpperCase()).toList();
-
-      _currencyList
-          .removeWhere((element) => !currencyFilter.contains(element.code));
+      _currencyList.removeWhere((element) {
+        if (currencyFilter.contains(element.code)) {
+          _favoriteList.add(element);
+        }
+        return currencyFilter.contains(element.code);
+      });
+      /* _currencyList.map((element) {
+        if (currencyFilter.contains(element.code.toUpperCase())) {
+          element.active = true;
+          return element;
+        }
+        return element;
+      }); */
     }
-
+/* 
     if (widget.favorite != null) {
       _favoriteList = _currencyService.findCurrenciesByCode(widget.favorite!);
-    }
+    } */
 
     _filteredList.addAll(_currencyList);
     super.initState();
@@ -112,9 +125,17 @@ class _CurrencyListViewState extends State<CurrencyListView> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const SizedBox(height: 12),
+        if (widget.title != null)
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 30, bottom: 20),
+            child: Text(
+              widget.title!,
+              style: Theme.of(context).textTheme.headline3,
+            ),
+          ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -134,14 +155,13 @@ class _CurrencyListViewState extends State<CurrencyListView> {
           child: ListView(
             physics: widget.physics,
             children: [
-              if (_favoriteList != null) ...[
-                ..._favoriteList!
-                    .map<Widget>((currency) => _listRow(currency))
+              if (_favoriteList.isNotEmpty) ...[
+                ..._favoriteList
+                    .map<Widget>((currency) => _listRow(
+                          currency,
+                          active: true,
+                        ))
                     .toList(),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Divider(thickness: 1),
-                ),
               ],
               ..._filteredList
                   .map<Widget>((currency) => _listRow(currency))
@@ -153,7 +173,7 @@ class _CurrencyListViewState extends State<CurrencyListView> {
     );
   }
 
-  Widget _listRow(Currency currency) {
+  Widget _listRow(Currency currency, {bool active = false}) {
     final TextStyle _titleTextStyle =
         widget.theme?.titleTextStyle ?? _defaultTitleTextStyle;
     final TextStyle _subtitleTextStyle =
@@ -163,61 +183,55 @@ class _CurrencyListViewState extends State<CurrencyListView> {
       // Add Material Widget with transparent color
       // so the ripple effect of InkWell will show on tap
       color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          widget.onSelect(currency);
-          Navigator.pop(context);
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9.0, horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                child: Row(
-                  children: [
-                    const SizedBox(width: 15),
-                    if (widget.showFlag) ...[
-                      Text(
-                        CurrencyUtils.currencyToEmoji(currency),
-                        style: TextStyle(
-                          fontSize: widget.theme?.flagSize ?? 25,
+      child: Opacity(
+        opacity: active ? 1 : 0.2,
+        child: InkWell(
+          onTap: () {
+            if (active) {
+              widget.onSelect(currency);
+              Navigator.pop(context);
+            }
+          },
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 9.0, horizontal: 20.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.showCurrencyCode) ...[
+                        Text(
+                          currency.code,
+                          style: _titleTextStyle,
                         ),
-                      ),
-                      const SizedBox(width: 15),
+                      ],
+                      if (widget.showCurrencyName) ...[
+                        Text(
+                          currency.name,
+                          style: widget.showCurrencyCode
+                              ? _subtitleTextStyle
+                              : _titleTextStyle,
+                        ),
+                      ]
                     ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.showCurrencyCode) ...[
-                            Text(
-                              currency.code,
-                              style: _titleTextStyle,
-                            ),
-                          ],
-                          if (widget.showCurrencyName) ...[
-                            Text(
-                              currency.name,
-                              style: widget.showCurrencyCode
-                                  ? _subtitleTextStyle
-                                  : _titleTextStyle,
-                            ),
-                          ]
-                        ],
-                      ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 15,
+                ),
+                if (widget.showFlag) ...[
+                  Text(
+                    CurrencyUtils.currencyToEmoji(currency),
+                    style: TextStyle(
+                      fontSize: widget.theme?.flagSize ?? 25,
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  currency.symbol,
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
-            ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
